@@ -5,7 +5,7 @@ const PORT = 3000;
 
 app.get('/', (req, res) => res.send('Hello from my invoice assistant!'));
 
-app.get('/test-paypal', async (req, res) => {
+app.get('/test-payvoice', async (req, res) => {
   try {
     const auth = Buffer.from(
       `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
