@@ -45,7 +45,7 @@ app.get('/test-invoice', async (req, res) => {
     const invoice = {
       detail: {
         currency_code: 'USD',
-        payment_term: { term_type: 'NET_14' },
+        payment_term: { term_type: 'NET_15' },
       },
       primary_recipients: [
         {
@@ -97,3 +97,41 @@ app.get('/api/invoices', async (req, res) => {
 
 app.listen(PORT, () => console.log(`Running at http://localhost:${PORT}`));
 
+// Backup: creates a PayPal order and returns a link the buyer can open to pay
+app.get('/test-order', async (req, res) => {
+  try {
+    const token = await getAccessToken();
+
+    const order = {
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          description: 'Logo design x3',
+          amount: { currency_code: 'USD', value: '450.00' },
+        },
+      ],
+      payment_source: {
+        paypal: {
+          experience_context: {
+            return_url: 'http://localhost:3000/',
+            cancel_url: 'http://localhost:3000/',
+          },
+        },
+      },
+    };
+
+    const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(order),
+    });
+
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+});
