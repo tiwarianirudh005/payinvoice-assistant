@@ -1,3 +1,4 @@
+// ---------- Invoice list ----------
 const invoiceBody = document.getElementById('invoice-body');
 const listMessage = document.getElementById('list-message');
 const refreshBtn = document.getElementById('refresh-btn');
@@ -62,5 +63,91 @@ async function loadInvoices() {
   }
 }
 
+// ---------- Invoice form ----------
+const form = document.getElementById('invoice-form');
+const itemsBox = document.getElementById('items');
+const formMessage = document.getElementById('form-message');
+const createBtn = document.getElementById('create-btn');
+const totalLine = document.getElementById('total-line');
+
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach((row) => {
+    total += Number(row.querySelector('.item-qty').value) * Number(row.querySelector('.item-price').value) || 0;
+  });
+  totalLine.innerHTML = `<strong>Total: $${total.toFixed(2)}</strong>`;
+}
+
+function addItemRow(name = '', quantity = 1, price = '') {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <input class="item-name" placeholder="Item (e.g. Logo design)" />
+    <input class="item-qty" type="number" min="0" step="any" placeholder="Qty" />
+    <input class="item-price" type="number" min="0" step="any" placeholder="Price each" />
+    <button type="button" class="remove-btn">✕</button>`;
+  row.querySelector('.item-name').value = name;
+  row.querySelector('.item-qty').value = quantity;
+  row.querySelector('.item-price').value = price;
+  row.addEventListener('input', updateTotal);
+  row.querySelector('.remove-btn').addEventListener('click', () => {
+    row.remove();
+    updateTotal();
+  });
+  itemsBox.appendChild(row);
+  updateTotal();
+}
+
+function getFormData() {
+  return {
+    clientName: document.getElementById('client-name').value,
+    clientEmail: document.getElementById('client-email').value,
+    terms: document.getElementById('terms').value,
+    items: [...document.querySelectorAll('.item-row')].map((row) => ({
+      name: row.querySelector('.item-name').value,
+      quantity: row.querySelector('.item-qty').value,
+      price: row.querySelector('.item-price').value,
+    })),
+  };
+}
+
+// Task 4 will use this to fill the form from the AI's answer
+function setFormData(data) {
+  document.getElementById('client-name').value = data.clientName || '';
+  document.getElementById('client-email').value = data.clientEmail || '';
+  document.getElementById('terms').value = data.terms || 'NET_15';
+  itemsBox.innerHTML = '';
+  (data.items || []).forEach((i) => addItemRow(i.name, i.quantity, i.price));
+  if (!itemsBox.children.length) addItemRow();
+  updateTotal();
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  createBtn.disabled = true;
+  formMessage.className = 'message';
+  formMessage.textContent = 'Creating invoice...';
+  try {
+    const res = await fetch('/api/create-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getFormData()),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Something went wrong.');
+    formMessage.className = 'message success';
+    formMessage.textContent = `Invoice ${data.id} created as a draft. Total: $${data.total}`;
+    loadInvoices();
+  } catch (err) {
+    formMessage.className = 'message error';
+    formMessage.textContent = err.message;
+  } finally {
+    createBtn.disabled = false;
+  }
+});
+
+// ---------- Start up ----------
 refreshBtn.addEventListener('click', loadInvoices);
+document.getElementById('add-item-btn').addEventListener('click', () => addItemRow());
+addItemRow();
 loadInvoices();

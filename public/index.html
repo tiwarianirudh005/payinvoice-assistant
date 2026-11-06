@@ -14,7 +14,36 @@
   </header>
 
   <main>
-    <!-- Task 4 and Task 3 sections get pasted here later -->
+    <!-- Task 4 section (AI box) goes here later -->
+
+    <section class="card">
+      <h2>New invoice</h2>
+      <form id="invoice-form">
+        <label>Client name
+          <input id="client-name" placeholder="e.g. Acme Corp" required />
+        </label>
+        <label>Client email (optional)
+          <input id="client-email" type="email" placeholder="client@example.com" />
+        </label>
+        <label>Payment terms
+          <select id="terms">
+            <option value="DUE_ON_RECEIPT">Due on receipt</option>
+            <option value="NET_10">Net 10 days</option>
+            <option value="NET_15" selected>Net 15 days</option>
+            <option value="NET_30">Net 30 days</option>
+            <option value="NET_45">Net 45 days</option>
+            <option value="NET_60">Net 60 days</option>
+          </select>
+        </label>
+
+        <div id="items"></div>
+        <button type="button" id="add-item-btn" class="secondary">+ Add item</button>
+        <p id="total-line"><strong>Total: $0.00</strong></p>
+
+        <button type="submit" id="create-btn">Create invoice</button>
+        <p id="form-message" class="message"></p>
+      </form>
+    </section>
 
     <section class="card">
       <div class="card-head">
