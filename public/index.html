@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayVoice Assistant</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>PayVoice Assistant</h1>
+    <p>Describe a job in plain English. Get a PayPal invoice.</p>
+  </header>
+
+  <main>
+    <!-- Task 4 and Task 3 sections get pasted here later -->
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Your invoices</h2>
+        <button type="button" id="refresh-btn" class="secondary">Refresh</button>
+      </div>
+      <p id="list-message" class="message"></p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Client</th>
+              <th>Amount</th>
+              <th>Due</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="invoice-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

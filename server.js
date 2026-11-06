@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const PAYPAL_BASE = 'https://api-m.sandbox.paypal.com';
 
 app.use(express.json());
+app.use(express.static('public')); // serves your website from the public folder
 
 // Asks PayPal for a temporary access token (the "key card")
 async function getAccessToken() {
@@ -25,62 +26,7 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-app.get('/', (req, res) => res.send('Hello from PayVoice Assistant!'));
-
-// Handshake test (what you already ran)
-app.get('/test-payvoice', async (req, res) => {
-  try {
-    await getAccessToken();
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-// Creates a DRAFT invoice with hardcoded test data
-app.get('/test-invoice', async (req, res) => {
-  try {
-    const token = await getAccessToken();
-
-    const invoice = {
-      detail: {
-        currency_code: 'USD',
-        payment_term: { term_type: 'NET_15' },
-      },
-      primary_recipients: [
-        {
-          billing_info: {
-            name: { given_name: 'Test', surname: 'Client' },
-            email_address: 'customer@example.com',
-          },
-        },
-      ],
-      items: [
-        {
-          name: 'Logo design',
-          quantity: '3',
-          unit_amount: { currency_code: 'USD', value: '150.00' },
-        },
-      ],
-    };
-
-    const response = await fetch(`${PAYPAL_BASE}/v2/invoicing/invoices`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(invoice),
-    });
-
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
-  }
-});
-
-// Lists your invoices (this will power your dashboard later)
+// Lists your invoices (powers the dashboard)
 app.get('/api/invoices', async (req, res) => {
   try {
     const token = await getAccessToken();
@@ -91,47 +37,8 @@ app.get('/api/invoices', async (req, res) => {
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
 app.listen(PORT, () => console.log(`Running at http://localhost:${PORT}`));
-
-// Backup: creates a PayPal order and returns a link the buyer can open to pay
-app.get('/test-order', async (req, res) => {
-  try {
-    const token = await getAccessToken();
-
-    const order = {
-      intent: 'CAPTURE',
-      purchase_units: [
-        {
-          description: 'Logo design x3',
-          amount: { currency_code: 'USD', value: '450.00' },
-        },
-      ],
-      payment_source: {
-        paypal: {
-          experience_context: {
-            return_url: 'http://localhost:3000/',
-            cancel_url: 'http://localhost:3000/',
-          },
-        },
-      },
-    };
-
-    const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(order),
-    });
-
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    res.status(500).json({ ok: false, message: err.message });
-  }
-});
