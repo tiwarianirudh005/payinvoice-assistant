@@ -29,7 +29,7 @@ async function getAccessToken() {
 const VALID_TERMS = ['DUE_ON_RECEIPT', 'NET_10', 'NET_15', 'NET_30', 'NET_45', 'NET_60', 'NET_90'];
 const MAX_TOTAL = 10000; // safety limit: refuse crazy amounts
 
-// Checks and cleans whatever the browser (or, later, the AI) sends us
+// Checks and cleans whatever the browser sends us
 function cleanInvoiceInput(body) {
   const clientName = String(body.clientName || '').trim();
   const clientEmail = String(body.clientEmail || '').trim();
@@ -71,6 +71,71 @@ app.get('/api/invoices', async (req, res) => {
     res.status(response.status).json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// AI step: turns plain English into invoice fields. It does NOT create anything.
+app.post('/api/parse-invoice', async (req, res) => {
+  const text = String(req.body.text || '').trim();
+  if (!text) return res.status(400).json({ message: 'Please describe the invoice first.' });
+  if (text.length > 600) {
+    return res.status(400).json({ message: 'Please keep the description under 600 characters.' });
+  }
+  if (!process.env.GEMINI_API_KEY || !process.env.AI_MODEL) {
+    return res.status(500).json({ message: 'AI is not configured on the server.' });
+  }
+
+  const prompt = `You turn a freelancer's plain-English description into invoice data.
+Return ONLY JSON in exactly this shape:
+{"clientName": string, "clientEmail": string, "terms": string, "items": [{"name": string, "quantity": number, "price": number}]}
+Rules:
+- "price" is the price of ONE unit, not the line total. "quantity" is a plain number.
+- Prices are plain numbers (no currency symbols). They are treated as USD.
+- "terms" must be one of: DUE_ON_RECEIPT, NET_10, NET_15, NET_30, NET_45, NET_60. Pick the closest to any due period mentioned. Default NET_15.
+- Use "" for any text you do not know. Never invent amounts or emails.
+- Item names should be short and clear (e.g. "Logo design").
+Description: ${text}`;
+
+  let raw = '';
+  try {
+    const aiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${process.env.AI_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': process.env.GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0 },
+        }),
+      }
+    );
+    const aiData = await aiRes.json();
+    if (!aiRes.ok) {
+      console.log('AI error:', JSON.stringify(aiData)); // shows in the terminal
+      return res.status(502).json({ message: aiData.error?.message || 'The AI request failed.' });
+    }
+
+    raw = (aiData.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    res.json({
+      clientName: String(parsed.clientName || ''),
+      clientEmail: String(parsed.clientEmail || ''),
+      terms: VALID_TERMS.includes(parsed.terms) ? parsed.terms : 'NET_15',
+      items: Array.isArray(parsed.items)
+        ? parsed.items.map((i) => ({
+            name: String(i.name || ''),
+            quantity: Number(i.quantity) || 1,
+            price: Number(i.price) || 0,
+          }))
+        : [],
+    });
+  } catch (err) {
+    console.log('Could not read AI output:', raw || err.message);
+    res.status(500).json({ message: 'Could not read the AI response. Try rephrasing.' });
   }
 });
 

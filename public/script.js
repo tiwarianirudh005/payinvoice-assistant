@@ -111,7 +111,7 @@ function getFormData() {
   };
 }
 
-// Task 4 will use this to fill the form from the AI's answer
+// Fills the form (used by the AI step)
 function setFormData(data) {
   document.getElementById('client-name').value = data.clientName || '';
   document.getElementById('client-email').value = data.clientEmail || '';
@@ -143,6 +143,38 @@ form.addEventListener('submit', async (e) => {
     formMessage.textContent = err.message;
   } finally {
     createBtn.disabled = false;
+  }
+});
+
+// ---------- AI step ----------
+const aiText = document.getElementById('ai-text');
+const aiBtn = document.getElementById('ai-btn');
+const aiMessage = document.getElementById('ai-message');
+
+aiBtn.addEventListener('click', async () => {
+  aiBtn.disabled = true;
+  aiBtn.textContent = 'Reading...';
+  aiMessage.className = 'message';
+  aiMessage.textContent = 'Reading your description...';
+  try {
+    const res = await fetch('/api/parse-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: aiText.value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'The AI could not read that.');
+    setFormData(data);
+    formMessage.textContent = '';
+    aiMessage.className = 'message success';
+    aiMessage.textContent = 'Done. Check the details below, fix anything wrong, then click Create invoice.';
+    form.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    aiMessage.className = 'message error';
+    aiMessage.textContent = err.message;
+  } finally {
+    aiBtn.disabled = false;
+    aiBtn.textContent = 'Generate invoice';
   }
 });
 

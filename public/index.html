@@ -14,7 +14,15 @@
   </header>
 
   <main>
-    <!-- Task 4 section (AI box) goes here later -->
+    <section class="card">
+      <h2>Describe the job</h2>
+      <textarea id="ai-text" rows="3" placeholder='e.g. "Three logos for Acme Corp at 150 dollars each, due in 14 days"'></textarea>
+      <p class="message">Amounts are in USD. The AI only fills the form below, nothing is created until you click Create invoice.</p>
+      <div class="row">
+        <button type="button" id="ai-btn">Generate invoice</button>
+      </div>
+      <p id="ai-message" class="message"></p>
+    </section>
 
     <section class="card">
       <h2>New invoice</h2>
