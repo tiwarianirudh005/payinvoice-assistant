@@ -3,7 +3,7 @@
 Turn plain English into PayPal invoices. Describe a job, let AI draft the invoice, review it, and create it in PayPal.
 
 **Live demo:** https://payinvoice-assistant.onrender.com/ 
-**Demo video:** YOUR_YOUTUBE_URL
+**Demo video:** https://youtu.be/1ogF5gIdhRs
 
 ## The problem
 Freelancers and small businesses lose time filling in invoice forms and often get them wrong. PayVoice lets them just describe the job ("Three logos for Acme Corp at 150 dollars each, due in 14 days") and handles the rest.
