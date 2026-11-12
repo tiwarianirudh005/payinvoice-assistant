@@ -2,7 +2,7 @@
 
 Turn plain English into PayPal invoices. Describe a job, let AI draft the invoice, review it, and create it in PayPal.
 
-**Live demo:** https://payinvoice-assistant.onrender.com/ (the free host sleeps when idle, so the first load can take about a minute)
+**Live demo:** https://payinvoice-assistant.onrender.com/ 
 **Demo video:** YOUR_YOUTUBE_URL
 
 ## The problem
